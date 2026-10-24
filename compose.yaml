@@ -12,10 +12,16 @@ services:
       - "127.0.0.1:5060:5060/udp"
       - "127.0.0.1:10000-10019:10000-10019/udp"
     volumes:
-      # Oculta todos os exemplos da imagem; sem ramais nem rotas externas.
+      # Oculta todos os exemplos da imagem; somente os dois ramais do projeto.
       - type: bind
         source: ./infra/asterisk
         target: /etc/asterisk
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./secrets/sip-auth.conf
+        target: /run/secrets/sip-auth.conf
         read_only: true
         bind:
           create_host_path: false
@@ -25,7 +31,7 @@ services:
     cpus: 1.0
     pids_limit: 128
     healthcheck:
-      test: ["CMD-SHELL", "asterisk -rx 'core show channeltypes' | grep -q '^PJSIP '"]
+      test: ["CMD-SHELL", "asterisk -rx 'core show channeltypes' | grep -q '^PJSIP ' && asterisk -rx 'pjsip show endpoints' | grep -q 'Objects found: 2'"]
       interval: 10s
       timeout: 5s
       retries: 3

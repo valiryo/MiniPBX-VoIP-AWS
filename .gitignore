@@ -33,5 +33,6 @@ crash.log
 # Ferramentas
 node_modules/
 dist/
+__pycache__/
 .DS_Store
 Thumbs.db

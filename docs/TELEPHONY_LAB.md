@@ -1,6 +1,11 @@
-# Laboratório de telefonia — Fase 0
+# Laboratório de telefonia — Fases 0 e 1
 
-## Objetivo e critérios
+O roteiro ativo é [Fase 1 — chamadas com Linphone e MicroSIP](PHASE1_CALLS.md).
+Ele contém as configurações dos clientes, senhas, testes SIP/RTP e o aceite manual.
+As seções abaixo preservam a configuração e as evidências **históricas da Fase 0**;
+o estado atual e os comandos de subida estão no [README](../README.md).
+
+## Preparação — Fase 0 (concluída)
 
 Executar Asterisk localmente, entrar na CLI e inspecionar sua configuração.
 O aceite exige o processo saudável **e** o driver PJSIP carregado.

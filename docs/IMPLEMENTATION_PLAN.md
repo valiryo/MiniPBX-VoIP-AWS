@@ -17,6 +17,15 @@
 
 ## Fase 1 — Telefonia real entre ramais (maior prioridade)
 
+**Estado atual (24/10/2026): concluída.** Sonda SIP/UDP aprovada na preparação;
+chamadas 1001 → 1002 e 1002 → 1001, áudio, RTP bidirecional em `ulaw`, bridge e
+encerramento confirmados pelo estudante. A validação complementar confirmou
+`INVITE`, `100 Trying`, `180 Ringing`, `200 OK`, `ACK` e `BYE` nas chamadas.
+Conflito UDP 5060 resolvido com porta local 5062 no Linphone. Critérios de
+aceitação satisfeitos; evidências manuais registradas como resumos sanitizados,
+sem logs SIP brutos. A Fase 2 não foi iniciada.
+Roteiro e evidências: [PHASE1_CALLS.md](PHASE1_CALLS.md).
+
 - Configurar ramais **1001 e 1002** com credenciais fortes, sem segredos no Git.
 - Criar dialplan estritamente interno: somente ligação entre 1001 e 1002; nenhuma rota externa.
 - Documentar registro via softphones gratuitos e diagnosticar registro/contatos (`pjsip show endpoints`, `pjsip show contacts` etc.).
@@ -29,6 +38,9 @@
 
 ## Fase 2 — AMI + integração mínima (grande prioridade)
 
+**Estado:** somente planejamento; implementação depende de nova solicitação.
+Continuar em modo local, sem AWS e sem painel React nesta etapa.
+
 - Configurar conta AMI com permissões restritas; conexão acessível apenas internamente.
 - Exercitar uma ação/consulta AMI e observar eventos reais por ferramenta simples antes do NestJS.
 - Implementar NestJS mínimo com `POST /calls`, `GET /extensions`, `GET /calls`, `/health`, `/telephony/health` e SQLite apenas para histórico.
@@ -39,6 +51,36 @@
 **Aceite:** chamada disparada pela API, eventos registrados coerentemente e diagnóstico de problemas AMI disponível.
 
 **Para aprender:** protocolo AMI, Originate, `ActionID`, `Uniqueid`, `Linkedid` e eventos de canais/bridges.
+
+### Sequência proposta para a próxima solicitação
+
+1. **AMI privada e primeiro exercício:** conferir ações, eventos e permissões
+   na versão Asterisk 22 usada pelo projeto; gerar segredo AMI distinto em
+   arquivo local ignorado; habilitar usuário de mínimo privilégio e acesso
+   pela rede privada do Compose, sem publicar 5038 no host. Exercitar conexão
+   autenticada, consulta de saúde/ramais e leitura de eventos por ferramenta
+   simples antes de implementar a API. Não imprimir autenticação ou segredos.
+2. **Originate interno e evidências:** solicitar somente 1001 → 1002 ou o
+   inverso, reutilizando os contextos restritos. Observar as duas pernas e
+   correlacionar `ActionID`, `Uniqueid` e `Linkedid` disponíveis. Distinguir
+   solicitação aceita, primeiro ramal atendido e os dois participantes na
+   bridge; registrar falhas reais com ramal desconectado.
+3. **API mínima e histórico:** implementar apenas os endpoints previstos na
+   especificação, com validação de origem/destino, conexão AMI persistente,
+   reconexão, timeout e SQLite/Prisma para histórico pequeno. Manter API local
+   e privada; usar `unknown` quando os eventos forem insuficientes. Calcular
+   durações somente com evidências confiáveis, sem inferir atendimento a partir
+   da resposta de aceitação do Originate.
+4. **Validação e operação:** testes focados de ramais, correlação de eventos,
+   integração AMI simulada, timeout e reconexão; teste real de chamada pela
+   API e revisão das evidências. Documentar subida, diagnóstico e parada. Para
+   reverter a integração, parar a API e desabilitar AMI, preservando os ramais
+   e os segredos existentes e retomando as chamadas diretas nos softphones.
+
+**Aceite da etapa futura:** chamada interna disparada pela API, resultado e
+histórico sustentados por eventos reais, tratamento honesto de falhas e AMI
+sem exposição pública. Até a nova solicitação, nenhuma configuração AMI,
+dependência de aplicação ou serviço adicional será implementado.
 
 ## Fase 3 — IaC AWS e segurança financeira (sem provisionar)
 
@@ -97,7 +139,7 @@ Confirmar plano real da conta AWS, créditos, preços, região, estimativa do te
 ## Marcadores de conclusão
 
 - [x] Fase 0 — Asterisk sobe localmente
-- [ ] Fase 1 — dois ramais fazem chamadas com áudio
+- [x] Fase 1 — dois ramais fazem chamadas com áudio; fluxo SIP, RTP e encerramento validados
 - [ ] Fase 2 — AMI integrada à API e histórico coerente
 - [ ] Fase 3 — Terraform validável e custos/teardown documentados
 - [ ] Fase 4 — deploy AWS opcional + destruição auditada
