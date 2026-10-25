@@ -1,6 +1,7 @@
-# Laboratório de telefonia — Fases 0 e 1
+# Laboratório de telefonia — Fases 0, 1 e 2
 
-O roteiro ativo é [Fase 1 — chamadas com Linphone e MicroSIP](PHASE1_CALLS.md).
+Para chamadas diretas: [Fase 1 — chamadas com Linphone e MicroSIP](PHASE1_CALLS.md).
+Para AMI e chamadas pela API: [Fase 2 — AMI e API local](PHASE2_AMI.md).
 Ele contém as configurações dos clientes, senhas, testes SIP/RTP e o aceite manual.
 As seções abaixo preservam a configuração e as evidências **históricas da Fase 0**;
 o estado atual e os comandos de subida estão no [README](../README.md).

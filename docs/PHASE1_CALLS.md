@@ -4,7 +4,8 @@
 RTP, bridge, fluxo SIP e encerramento validados conforme os relatos manuais do
 estudante, incluindo a validação complementar da sinalização. Critérios de
 aceitação satisfeitos; nenhuma evidência manual obrigatória restante nesta fase.
-Fase 2 não iniciada. Nenhuma etapa AWS ou AMI implementada.
+Validação da Fase 2 iniciada em solicitação posterior; ver [PHASE2_AMI.md](PHASE2_AMI.md).
+Nenhuma etapa AWS iniciada.
 
 ## 1. Preparar a central
 
@@ -226,8 +227,9 @@ não enfraquecer a autenticação da central.
 Verificado automaticamente em 23/10/2026: subida saudável, dois endpoints e
 dois destinos cruzados, Digest/registro real dos dois ramais pelo Windows,
 senha errada rejeitada, 404 para destinos proibidos e remoção dos contatos.
-O gerador e a sonda não imprimiram senhas. AMI/HTTP e gravação continuam
-desativados. Esses resultados automatizados são da preparação de 23/10/2026;
+O gerador e a sonda não imprimiram senhas. Naquela preparação, AMI/HTTP e
+gravação estavam desativados; a ativação posterior da AMI pertence à Fase 2.
+Esses resultados automatizados são da preparação de 23/10/2026;
 não foram reexecutados nesta atualização documental.
 
 ### Evidências manuais registradas em 24/10/2026
@@ -317,8 +319,8 @@ Limpeza dos recursos locais: `docker compose down --volumes`, preservando
 
 Para bloquear chamadas imediatamente, pare o serviço. Para voltar à configuração
 anterior, restaure os `.conf` versionados e reinicie, preservando os segredos.
-A Fase 1 está concluída e marcada no plano. A Fase 2 está apenas planejada e só
-será implementada mediante nova solicitação do estudante.
+A Fase 1 está concluída e marcada no plano. A integração AMI/API foi autorizada
+posteriormente; seu estado e aceite estão em [PHASE2_AMI.md](PHASE2_AMI.md).
 
 ## Referências oficiais
 

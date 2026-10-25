@@ -8,6 +8,10 @@ services:
     entrypoint: ["/usr/sbin/asterisk"]
     command: ["-f", "-n", "-vv", "-T"]
     restart: "no"
+    networks:
+      default: {}
+      control:
+        ipv4_address: 172.29.88.2
     ports:
       - "127.0.0.1:5060:5060/udp"
       - "127.0.0.1:10000-10019:10000-10019/udp"
@@ -22,6 +26,12 @@ services:
       - type: bind
         source: ./secrets/sip-auth.conf
         target: /run/secrets/sip-auth.conf
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./secrets/ami-user.conf
+        target: /run/secrets/ami-user.conf
         read_only: true
         bind:
           create_host_path: false
@@ -41,3 +51,64 @@ services:
       options:
         max-size: "5m"
         max-file: "2"
+
+  api:
+    build: ./apps/api
+    restart: "no"
+    depends_on:
+      asterisk:
+        condition: service_healthy
+    networks:
+      default: {}
+      control:
+        ipv4_address: 172.29.88.3
+    ports:
+      - "127.0.0.1:3000:3000/tcp"
+    environment:
+      AMI_HOST: 172.29.88.2
+      AMI_PORT: "5038"
+      AMI_SECRET_FILE: /run/secrets/ami-password.txt
+      DATABASE_PATH: /data/calls.sqlite
+    volumes:
+      - type: bind
+        source: ./secrets/ami-password.txt
+        target: /run/secrets/ami-password.txt
+        read_only: true
+        bind:
+          create_host_path: false
+      - api-data:/data
+      - type: bind
+        source: ./scripts/ami-probe.mjs
+        target: /tools/ami-probe.mjs
+        read_only: true
+        bind:
+          create_host_path: false
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 128
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+volumes:
+  api-data:
+
+networks:
+  control:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.29.88.0/29

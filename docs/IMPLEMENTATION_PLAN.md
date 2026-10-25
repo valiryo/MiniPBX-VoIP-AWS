@@ -23,7 +23,8 @@ encerramento confirmados pelo estudante. A validação complementar confirmou
 `INVITE`, `100 Trying`, `180 Ringing`, `200 OK`, `ACK` e `BYE` nas chamadas.
 Conflito UDP 5060 resolvido com porta local 5062 no Linphone. Critérios de
 aceitação satisfeitos; evidências manuais registradas como resumos sanitizados,
-sem logs SIP brutos. A Fase 2 não foi iniciada.
+sem logs SIP brutos. A Fase 2 foi autorizada posteriormente e tem seu estado
+registrado na seção seguinte.
 Roteiro e evidências: [PHASE1_CALLS.md](PHASE1_CALLS.md).
 
 - Configurar ramais **1001 e 1002** com credenciais fortes, sem segredos no Git.
@@ -38,8 +39,16 @@ Roteiro e evidências: [PHASE1_CALLS.md](PHASE1_CALLS.md).
 
 ## Fase 2 — AMI + integração mínima (grande prioridade)
 
-**Estado:** somente planejamento; implementação depende de nova solicitação.
-Continuar em modo local, sem AWS e sem painel React nesta etapa.
+**Estado (24/10/2026): concluída.**
+AMI privada, API NestJS, histórico SQLite nativo do Node e 14 testes aprovados.
+Consultas AMI reais, autenticação, reconexão isolada e HTTP verificados. Chamada
+1001 → 1002 pela API confirmada pelo estudante com áudio bidirecional e
+desligamento normal; histórico sanitizado conferido, com dois canais na bridge,
+`ended` e 75166 ms de conversa. Falha real com 1001 desregistrado confirmada:
+`OriginateResponse: Failure`, estado `failed`, sem `answeredAt` ou duração de
+conversa; registro reativado pelo estudante. Critérios de aceitação satisfeitos.
+Roteiro: [PHASE2_AMI.md](PHASE2_AMI.md).
+Modo local, sem AWS e sem painel React nesta etapa.
 
 - Configurar conta AMI com permissões restritas; conexão acessível apenas internamente.
 - Exercitar uma ação/consulta AMI e observar eventos reais por ferramenta simples antes do NestJS.
@@ -52,7 +61,7 @@ Continuar em modo local, sem AWS e sem painel React nesta etapa.
 
 **Para aprender:** protocolo AMI, Originate, `ActionID`, `Uniqueid`, `Linkedid` e eventos de canais/bridges.
 
-### Sequência proposta para a próxima solicitação
+### Sequência da implementação autorizada
 
 1. **AMI privada e primeiro exercício:** conferir ações, eventos e permissões
    na versão Asterisk 22 usada pelo projeto; gerar segredo AMI distinto em
@@ -67,7 +76,8 @@ Continuar em modo local, sem AWS e sem painel React nesta etapa.
    bridge; registrar falhas reais com ramal desconectado.
 3. **API mínima e histórico:** implementar apenas os endpoints previstos na
    especificação, com validação de origem/destino, conexão AMI persistente,
-   reconexão, timeout e SQLite/Prisma para histórico pequeno. Manter API local
+   reconexão, timeout e SQLite nativo do Node para histórico pequeno (decisão
+   justificada no roteiro, sem adicionar ORM nesta fase). Manter API local
    e privada; usar `unknown` quando os eventos forem insuficientes. Calcular
    durações somente com evidências confiáveis, sem inferir atendimento a partir
    da resposta de aceitação do Originate.
@@ -77,10 +87,11 @@ Continuar em modo local, sem AWS e sem painel React nesta etapa.
    reverter a integração, parar a API e desabilitar AMI, preservando os ramais
    e os segredos existentes e retomando as chamadas diretas nos softphones.
 
-**Aceite da etapa futura:** chamada interna disparada pela API, resultado e
+**Aceite da etapa:** chamada interna disparada pela API, resultado e
 histórico sustentados por eventos reais, tratamento honesto de falhas e AMI
-sem exposição pública. Até a nova solicitação, nenhuma configuração AMI,
-dependência de aplicação ou serviço adicional será implementado.
+sem exposição pública. Aceite concluído com evidências sanitizadas de chamada
+normal e falha real, além dos testes automatizados e consultas de diagnóstico.
+Não avançar para a Fase 3 sem nova solicitação.
 
 ## Fase 3 — IaC AWS e segurança financeira (sem provisionar)
 
@@ -140,7 +151,7 @@ Confirmar plano real da conta AWS, créditos, preços, região, estimativa do te
 
 - [x] Fase 0 — Asterisk sobe localmente
 - [x] Fase 1 — dois ramais fazem chamadas com áudio; fluxo SIP, RTP e encerramento validados
-- [ ] Fase 2 — AMI integrada à API e histórico coerente
+- [x] Fase 2 — AMI integrada à API e histórico coerente; chamada e falha real validadas
 - [ ] Fase 3 — Terraform validável e custos/teardown documentados
 - [ ] Fase 4 — deploy AWS opcional + destruição auditada
 - [ ] Fase 5 — extensões opcionais (S3/CloudWatch/painel)

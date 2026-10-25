@@ -4,7 +4,11 @@ Foco: Asterisk, SIP, RTP e AMI; AWS/Terraform nas fases posteriores.
 Fase 0 validada; **Fase 1 concluída em 24/10/2026**, com chamadas, áudio, RTP,
 fluxo SIP, bridge e encerramento validados pelo estudante usando Linphone +
 MicroSIP no próprio Windows. Ramais 1001/1002 e discagem interna configurados.
-Nenhuma conta AWS, API, banco ou interface web é necessária.
+**Fase 2 concluída em 24/10/2026:** AMI privada, API NestJS local e histórico
+SQLite pequeno. Chamada pela API validada com áudio nos dois sentidos e estado
+final `ended`; falha com origem desconectada validada como `failed`, sem
+atendimento ou duração de conversa fictícios.
+Nenhuma conta AWS ou interface web é necessária.
 
 ## Ambiente verificado em 23/10/2026 e relato manual de 24/10/2026
 
@@ -35,8 +39,9 @@ Set-Location 'C:\Users\valer\Projects\MiniPBX-VoIP-AWS'
 docker version
 docker compose version
 python scripts/init-sip-secrets.py
+python scripts/init-ami-secret.py
 docker compose config --quiet
-docker compose up -d --wait --wait-timeout 60
+docker compose up -d --build --wait --wait-timeout 120
 docker compose ps
 docker compose exec asterisk asterisk -rv
 ```
@@ -74,9 +79,10 @@ Siga o [roteiro da Fase 1](docs/PHASE1_CALLS.md) para configurar os dois softpho
 observar SIP/RTP e testar chamadas. O [laboratório inicial](docs/TELEPHONY_LAB.md)
 preserva os conceitos e as evidências da Fase 0.
 
-O gerador cria senhas distintas de 256 bits em `secrets/`, ignorado pelo Git,
+Os geradores criam senhas distintas de 256 bits em `secrets/`, ignorado pelo Git,
 e preserva o conjunto existente nas execuções seguintes. Somente `sip-auth.conf`
-é montado no Asterisk, para leitura. Não existe senha padrão, nem interpolação
+é montado para SIP; AMI usa `ami-user.conf` no Asterisk e `ami-password.txt` na
+API, para leitura. Não existe senha padrão, nem interpolação
 via `.env`. Não compartilhe esses arquivos nem os inclua em capturas de tela.
 
 Para copiar cada senha ao configurar o respectivo softphone, sem imprimi-la:
@@ -100,6 +106,24 @@ inexistente. Remove os próprios contatos ao final; não testa áudio nem atendi
 Não execute durante as chamadas manuais. O teste desliga o logger SIP para não
 registrar material de autenticação. Reabra o logger somente ao fazer o exercício.
 
+## Fase 2 — AMI e API local
+
+**Fase 2:** consulte o [roteiro AMI/API](docs/PHASE2_AMI.md) para fazer a chamada
+de retorno: primeiro atenda a origem, depois o destino. A API está em
+`http://127.0.0.1:3000`; AMI 5038 não é publicada no host.
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:3000/telephony/health
+Invoke-RestMethod http://127.0.0.1:3000/extensions
+$labAttempt = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:3000/calls' -ContentType 'application/json' -Body '{"from":"1001","to":"1002"}'
+Invoke-RestMethod -Uri ("http://127.0.0.1:3000/calls/" + $labAttempt.id)
+```
+
+202/`requested` significa tentativa criada; `answered` exige os dois ramais na
+mesma bridge. Quedas de observação produzem `unknown`. Não há reenvio automático
+de Originate. Para verificar sem telefonar: `python scripts/test-api-local.py`.
+Testes da integração: `npm --prefix apps/api ci` e `npm --prefix apps/api test`.
+
 ## Desligar e limpar
 
 ```powershell
@@ -118,7 +142,9 @@ docker compose ps --all
 ```
 
 Esse comando remove o contêiner, sua rede e os volumes anônimos que a imagem
-declara (sons, chaves, provisionamento, logs e spool). A gravação de chamadas
+declara (sons, chaves, provisionamento, logs e spool), **e apaga o histórico
+SQLite do volume `api-data` da Fase 2**. Para preservar o histórico, use somente
+`docker compose stop` ou `docker compose down` sem `--volumes`. A gravação de chamadas
 está desativada. Os arquivos do repositório, `secrets/` e a imagem permanecem.
 O gerador não apaga nem gira senhas; preserve o conjunto local para reutilizar
 os perfis dos softphones. Rotação exige atualizar os dois arquivos de senha,
@@ -132,7 +158,8 @@ Não use `docker system prune` para limpar este projeto.
   com desafio 401 e resposta 200; senhas incorretas rejeitadas; autochamadas e
   destino local 9999 rejeitados com 404; contatos temporários removidos.
 - Dois endpoints, dois destinos cruzados, aplicação Dial e bridge simples carregados.
-  SIP/RTP publicados somente em loopback; AMI/HTTP e gravação desativados.
+  SIP/RTP publicados somente em loopback; HTTP do Asterisk e gravação desativados.
+  Na Fase 2, AMI foi habilitada na rede privada e HTTP da API somente em loopback.
 - Sem suíte unitária; os testes de sinalização usam UDP real pelo Windows.
 - Aviso residual da ajuda interna de Stasis observado na inicialização;
   contexto e evidência registrados no roteiro de telefonia.
@@ -158,5 +185,16 @@ Não use `docker system prune` para limpar este projeto.
 
 Fontes de escopo e sequência: [AGENTS.md](AGENTS.md),
 [especificação](docs/PROJECT_SPEC.md) e [plano](docs/IMPLEMENTATION_PLAN.md).
-Fase 2 apenas planejada no plano de implementação, sem início automático.
+Fase 2 concluída: AMI/API implementadas, 14 testes automatizados e verificações reais de
+consulta/conexão e HTTP aprovados. Chamada 1001 → 1002 pela API confirmada pelo
+estudante com áudio bidirecional e desligamento normal. O histórico conferido
+contém 17 eventos sanitizados, dois canais na mesma bridge, encerramento `ended`
+e 75166 ms de conversa sustentados pelos timestamps AMI. A tentativa com origem
+desregistrada apresentou `queued=true`, depois `OriginateResponse: Failure`,
+estado `failed`, `answeredAt=null` e `durationMs=null`. O estudante reativou 1001;
+ambos os ramais voltaram a apresentar contato conhecido na consulta à API.
+Critérios satisfeitos, sem pendência manual obrigatória; evidências sanitizadas
+em [PHASE2_AMI.md](docs/PHASE2_AMI.md). Nenhum log bruto ou segredo foi acrescentado.
+O histórico usa SQLite nativo do Node 24 fixado, sem ORM, por ser uma persistência
+pequena de apoio ao estudo. Fase 3 não iniciada.
 Não foram executados comandos AWS/Terraform.
